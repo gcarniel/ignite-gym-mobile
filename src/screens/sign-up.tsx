@@ -4,6 +4,7 @@ import {
   Image,
   ScrollView,
   Text,
+  useToast,
   VStack,
 } from '@gluestack-ui/themed'
 
@@ -16,6 +17,9 @@ import { useNavigation } from '@react-navigation/native'
 import { useForm, Controller } from 'react-hook-form'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { ToastMessage } from '@components/toast-message'
+import { api } from '@services/api'
+import { AppError } from '@utils/app-error'
 
 const signUpSchema = yup.object({
   name: yup.string().required('Informe o nome'),
@@ -44,14 +48,57 @@ export function SignUp() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(signUpSchema),
+    defaultValues: {
+      name: 'gabriel',
+      email: 'gabriel@email.com',
+      password: '123456',
+      passwordConfirm: '123456',
+    },
   })
 
+  const toast = useToast()
   const { navigate } = useNavigation<AuthNavigatorRoutesProps>()
 
   const handleLogin = () => navigate('sign-in')
 
-  const handleSignUp = (data: FormData) => {
-    console.log('handleSignUp', data)
+  const handleSignUp = async ({ email, name, password }: FormData) => {
+    try {
+      const { data } = await api.post('/users', {
+        name,
+        email,
+        password,
+      })
+
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            action={data.status === 'error' ? 'error' : 'success'}
+            title="Algo deu errado"
+            description={data.message}
+            onClose={() => toast.close(id)}
+          />
+        ),
+      })
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError
+        ? error.message
+        : 'Não foi possivel criar a conta, tente novamente mais tarde'
+
+      toast.show({
+        placement: 'top',
+        render: ({ id }) => (
+          <ToastMessage
+            id={id}
+            action="error"
+            title={title}
+            onClose={() => toast.close(id)}
+          />
+        ),
+      })
+    }
   }
 
   return (

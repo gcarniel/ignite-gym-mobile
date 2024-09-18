@@ -32,7 +32,7 @@ export function SignIn() {
 
   const toast = useToast()
 
-  const { signIn, loading } = useAuth()
+  const { signIn, isLoading: loading } = useAuth()
 
   const { navigate } = useNavigation<AuthNavigatorRoutesProps>()
 

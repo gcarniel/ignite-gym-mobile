@@ -20,6 +20,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { ToastMessage } from '@components/toast-message'
 import { api } from '@services/api'
 import { AppError } from '@utils/app-error'
+import { useState } from 'react'
+import { useAuth } from '@hooks/use-auth'
 
 const signUpSchema = yup.object({
   name: yup.string().required('Informe o nome'),
@@ -56,32 +58,26 @@ export function SignUp() {
     },
   })
 
+  const [isLoading, setIsLoading] = useState(false)
   const toast = useToast()
+  const { signIn } = useAuth()
   const { navigate } = useNavigation<AuthNavigatorRoutesProps>()
 
   const handleLogin = () => navigate('sign-in')
 
   const handleSignUp = async ({ email, name, password }: FormData) => {
     try {
-      const { data } = await api.post('/users', {
+      setIsLoading(true)
+      await api.post('/users', {
         name,
         email,
         password,
       })
 
-      toast.show({
-        placement: 'top',
-        render: ({ id }) => (
-          <ToastMessage
-            id={id}
-            action={data.status === 'error' ? 'error' : 'success'}
-            title="Algo deu errado"
-            description={data.message}
-            onClose={() => toast.close(id)}
-          />
-        ),
-      })
+      await signIn(email, password)
     } catch (error) {
+      setIsLoading(false)
+
       const isAppError = error instanceof AppError
       const title = isAppError
         ? error.message
@@ -191,6 +187,7 @@ export function SignUp() {
             <Button
               title="Criar e acessar"
               onPress={handleSubmit(handleSignUp)}
+              isLoading={isLoading}
             />
           </Center>
 

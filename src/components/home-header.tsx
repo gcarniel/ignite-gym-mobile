@@ -4,12 +4,14 @@ import { LogOut } from 'lucide-react-native'
 import { TouchableOpacity } from 'react-native'
 import { useAuth } from '@hooks/use-auth'
 
+import defaulUserPhotoImg from '@assets/userPhotoDefault.png'
+
 export function HomeHeader() {
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
   return (
     <HStack bg="$gray600" pt="$16" pb="$5" px="$8" alignItems="center" gap="$4">
       <UserPhoto
-        source={{ uri: 'https://github.com/gcarniel.png' }}
+        source={user.avatar ? { uri: user.avatar } : defaulUserPhotoImg}
         w="$16"
         h="$16"
         alt="Imagem do usuário"
@@ -20,7 +22,7 @@ export function HomeHeader() {
           Olá,
         </Text>
         <Heading color="$gray100" fontSize="$md">
-          Dunha{' '}
+          {user?.name}
         </Heading>
       </VStack>
 

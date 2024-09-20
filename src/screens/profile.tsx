@@ -25,6 +25,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { api } from '@services/api'
 import { AppError } from '@utils/app-error'
 
+import defaulUserPhotoImg from '@assets/userPhotoDefault.png'
+
 type FormDataProps = {
   name: string
   email?: string
@@ -64,7 +66,6 @@ const profileSchema = yup.object({
 
 export function Profile() {
   const [isUpdating, setIsUpdating] = useState(false)
-  const [userPhoto, setUserPhoto] = useState('https://github.com/gcarniel.png')
   const toast = useToast()
   const { user, updateUserProfile } = useAuth()
 
@@ -86,6 +87,7 @@ export function Profile() {
         quality: 1,
         aspect: [4, 4],
         allowsEditing: true,
+        allowsMultipleSelection: false,
       })
 
       if (photoSelected.canceled) return
@@ -113,7 +115,44 @@ export function Profile() {
           return
         }
 
-        setUserPhoto(photoURI)
+        const photo = photoSelected.assets[0]
+        const uri = photo.uri
+        const fileExtension = uri.split('.').pop()
+
+        const photoFile = {
+          name: `${user.name}.${fileExtension}`.toLowerCase(),
+          uri,
+          type: `${photo.type}/${fileExtension}`,
+        } as never
+
+        const userPhotoUploadForm = new FormData()
+        userPhotoUploadForm.append('avatar', photoFile)
+        const avatarUpdtedResponse = await api.patch(
+          '/users/avatar',
+          userPhotoUploadForm,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        )
+
+        await updateUserProfile({
+          ...user,
+          avatar: avatarUpdtedResponse.data.avatar,
+        })
+
+        toast.show({
+          placement: 'top',
+          render: ({ id }) => (
+            <ToastMessage
+              id={id}
+              action="success"
+              title="Imagem alterada com sucesso"
+              onClose={() => toast.close(id)}
+            />
+          ),
+        })
       }
     } catch (error) {
       toast.show({
@@ -188,7 +227,11 @@ export function Profile() {
       <ScrollView contentContainerStyle={{ paddingBottom: 36 }}>
         <Center mt="$6" px="$10">
           <UserPhoto
-            source={{ uri: userPhoto }}
+            source={
+              user.avatar
+                ? { uri: `${api.defaults.baseURL}/avatar/${user.avatar}` }
+                : defaulUserPhotoImg
+            }
             size="xl"
             alt="Imagem do usuário"
           />

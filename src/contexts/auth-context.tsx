@@ -21,6 +21,7 @@ export type AuthContextDataProps = {
   isLoading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  updateUserProfile: (user: UserDTO) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextDataProps>(
@@ -35,6 +36,11 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     api.defaults.headers.common.Authorization = `Bearer ${token}`
 
     setUser(userData)
+  }
+
+  const updateUserProfile = async (userUpdated: UserDTO) => {
+    setUser(userUpdated)
+    await storageUserSave(userUpdated)
   }
 
   const signIn = async (email: string, password: string) => {
@@ -89,6 +95,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
         isLoading,
         signIn,
         signOut,
+        updateUserProfile,
       }}
     >
       {children}

@@ -11,12 +11,14 @@ interface InputProps extends ComponentProps<typeof InputField> {
   isReadOnly?: boolean
   errorMessage?: string | null
   isInvalid?: boolean
+  isDisabled?: boolean
 }
 
 export function Input({
   isReadOnly = false,
   errorMessage = null,
   isInvalid = false,
+  isDisabled = false,
   ...props
 }: InputProps) {
   const invalid = !!errorMessage || isInvalid
@@ -36,6 +38,10 @@ export function Input({
         $invalid={{
           borderWidth: 1,
           borderColor: '$red500',
+        }}
+        isDisabled={isDisabled}
+        $disabled={{
+          opacity: 0.5,
         }}
       >
         <InputField

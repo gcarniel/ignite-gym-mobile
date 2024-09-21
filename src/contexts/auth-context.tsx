@@ -48,9 +48,12 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
       setIsLoading(true)
       const { data } = await api.post('/sessions', { email, password })
 
-      if (data.user && data.token) {
+      if (data.user && data.token && data.refresh_token) {
         await storageUserSave(data.user)
-        await storageAuthTokenSave(data.token)
+        await storageAuthTokenSave({
+          token: data.token,
+          refreshToken: data.refresh_token,
+        })
 
         updateUserAndToken(data.user, data.token)
       }
@@ -74,7 +77,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     try {
       setIsLoading(true)
       const userLogged = await storageUserGet()
-      const token = await storageAuthTokenGet()
+      const { token } = await storageAuthTokenGet()
 
       if (userLogged && token) {
         updateUserAndToken(userLogged, token)
@@ -86,6 +89,14 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
   useEffect(() => {
     loadUserData()
+  }, [])
+
+  useEffect(() => {
+    const subscribe = api.registerInterceptTokenManager(signOut)
+
+    return () => {
+      subscribe()
+    }
   }, [])
 
   return (
